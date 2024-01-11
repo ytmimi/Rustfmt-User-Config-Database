@@ -10,8 +10,25 @@ fn main() -> anyhow::Result<()> {
     let user_agent = std::env::var("GITHUB_USER_AGENT")
         .context("Must set GITHUB_USER_AGENT environment variable")?;
 
-    let repositores = search_github_repositories(&github_api_token, &user_agent)?;
+    let graphql_response = search_github_repositories(&github_api_token, &user_agent)?;
 
-    println!("{}", repositores);
+    if let Some(errors) = graphql_response.error {
+        println!("{errors}")
+    }
+
+    let Some(data) = graphql_response.data else {
+        return Ok(());
+    };
+
+    for repository in data.repositories() {
+        println!(
+            "GraphQL ID: {}\nName: {}\nLatest Commit: {}\nPushed At: {}\n% Written in Rust {:.2}%\n",
+            repository.id(),
+            repository.name_with_owner(),
+            repository.commit_hash(),
+            repository.pushed_at(),
+            repository.percent_of_code_in_rust(),
+        );
+    }
     Ok(())
 }
