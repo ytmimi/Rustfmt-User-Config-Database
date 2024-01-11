@@ -1,66 +1,13 @@
+mod graphql;
+use graphql::{github_repository_search_variables, GITHUB_GRAPHQL_URL, GITHUB_REPOSITORY_QUERY};
+pub use graphql::{GitHubSearchResult, GraphQLResponse};
+
 use reqwest::header;
 
-/// Details on the endpoint can be found here
-/// <https://docs.github.com/en/graphql/guides/forming-calls-with-graphql#the-graphql-endpoint>
-const GITHUB_GRAPHQL_URL: &str = "https://api.github.com/graphql";
-
-const GITHUB_REPOSITORY_QUERY: &str = "
-query GitHubRepositoris(
-    $query: String!,
-    $after: String,
-    $limit: Int!,
-    $languageOrderBy: LanguageOrder!,
-  ) {
-    search(
-      first: $limit,
-      after: $after,
-      query: $query,
-      type: REPOSITORY
-    ) {
-      repositoryCount,
-      pageInfo {
-        hasNextPage,
-        endCursor,
-        startCursor,
-      },
-      nodes {
-        ... on Repository {
-          id,
-          nameWithOwner,
-          description,
-          url,
-          archivedAt,
-          isFork,
-          isLocked,
-          pushedAt,
-          languages(first: 5, orderBy: $languageOrderBy) {
-            totalCount,
-            totalSize,
-            edges {
-              size
-              node {
-                name
-              }
-            }
-          }
-          defaultBranchRef {
-            target {
-              oid
-            }
-          }
-        }
-      }
-    }
-  }
-";
-
-const GITHUB_REPOSITORY_QUERY_VARIABLES: &str = r#"{
-    "query": "language:rust topic:rust stars:>=50 template:false archived:false",
-    "limit": 10,
-    "languageOrderBy": {"field": "SIZE", "direction": "DESC"}
-}"#;
-
-pub fn search_github_repositories(api_key: &str, user_agent: &str) -> anyhow::Result<String> {
+pub fn search_github_repositories(
+    api_key: &str,
+    user_agent: &str,
+) -> anyhow::Result<GraphQLResponse<GitHubSearchResult>> {
     let mut headers = header::HeaderMap::new();
     headers.insert(
         header::AUTHORIZATION,
@@ -73,17 +20,16 @@ pub fn search_github_repositories(api_key: &str, user_agent: &str) -> anyhow::Re
         .build()?;
 
     let body = serde_json::json!({
-        "operationName": "GitHubRepositoris",
+        "operationName": "GitHubRepositorySearch",
         "query": GITHUB_REPOSITORY_QUERY,
-        "variables": GITHUB_REPOSITORY_QUERY_VARIABLES
+        "variables": github_repository_search_variables(10, None)
     });
-
-    println!("Body: {body}");
 
     let resp = client
         .post(GITHUB_GRAPHQL_URL)
         .body(body.to_string())
         .send()?;
 
-    Ok(resp.text()?)
+    let text = resp.text()?;
+    Ok(GraphQLResponse::new(text)?)
 }
