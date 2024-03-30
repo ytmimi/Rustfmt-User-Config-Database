@@ -110,6 +110,7 @@ pub struct GitHubSearchResult {
 #[serde(rename_all = "camelCase")]
 pub struct GitHubSearchResultInner {
     /// The total number of repositories that matched the search query
+    #[allow(dead_code)]
     repository_count: usize,
     /// Information to aid in pagination.
     page_info: PageInfo,
@@ -120,11 +121,13 @@ pub struct GitHubSearchResultInner {
 
 impl GitHubSearchResult {
     /// The total number of repositories that met the search critera.
+    #[allow(dead_code)]
     pub fn total_repository_count(&self) -> usize {
         self.search.repository_count
     }
 
     /// All the repositories returned in this page of data.
+    #[allow(dead_code)]
     pub fn repositories(&self) -> &[RepositoryInfo] {
         &self.search.repositories
     }
