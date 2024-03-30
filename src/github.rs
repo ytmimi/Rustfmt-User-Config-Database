@@ -22,7 +22,7 @@ pub fn search_github_repositories(
     let body = serde_json::json!({
         "operationName": "GitHubRepositorySearch",
         "query": GITHUB_REPOSITORY_QUERY,
-        "variables": github_repository_search_variables(10, None)
+        "variables": github_repository_search_variables(10, None, None)
     });
 
     let resp = client
