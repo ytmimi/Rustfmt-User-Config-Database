@@ -94,11 +94,9 @@ where
 struct PageInfo {
     /// When paginating forwards, are there more items?
     #[allow(unused)]
-    // FIXME(ytmimi): remove #[allow(unused)] after I add pagination support.
+    // FIXME(ytmimi): I'm not sure if `has_next_page` is useful, but i'll keep it for now.
     has_next_page: bool,
     /// When paginating forwards, the cursor to continue
-    #[allow(unused)]
-    // FIXME(ytmimi): remove #[allow(unused)] after I add pagination support.
     end_cursor: Option<String>,
 }
 
@@ -114,8 +112,6 @@ pub struct GitHubSearchResultInner {
     /// The total number of repositories that matched the search query
     repository_count: usize,
     /// Information to aid in pagination.
-    #[allow(unused)]
-    // FIXME(ytmimi): remove #[allow(unused)] after I add pagination support.
     page_info: PageInfo,
     #[serde(rename = "nodes")]
     /// A list of repositories
@@ -133,10 +129,13 @@ impl GitHubSearchResult {
         &self.search.repositories
     }
 
+    /// Convert the search result into a [Vec<RepositoryInfo>].
+    pub fn into_repositories(self) -> Vec<RepositoryInfo> {
+        self.search.repositories
+    }
+
     /// Token for the next page of data if it exists.
-    #[allow(unused)]
-    // FIXME(ytmimi): remove #[allow(unused)] after I add pagination support.
-    fn next_page(&self) -> Option<&str> {
+    pub fn next_page(&self) -> Option<&str> {
         self.search.page_info.end_cursor.as_deref()
     }
 }
