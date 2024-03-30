@@ -1,5 +1,5 @@
 use anyhow::Context;
-use rustfmt_user_config_db::search_github_repositories;
+use rustfmt_user_config_db::GitHubRepoSearch;
 
 fn main() -> anyhow::Result<()> {
     dotenv::dotenv().ok();
@@ -7,20 +7,15 @@ fn main() -> anyhow::Result<()> {
     let github_api_token = std::env::var("GITHUB_API_TOKEN")
         .context("Must set GITHUB_API_TOKEN environment variable")?;
 
-    let user_agent = std::env::var("GITHUB_USER_AGENT")
-        .context("Must set GITHUB_USER_AGENT environment variable")?;
+    let mut github_search = GitHubRepoSearch::new(&github_api_token);
+    github_search
+        .repositories_per_page(10)
+        .max_pages(3)
+        .min_stars(50);
 
-    let graphql_response = search_github_repositories(&github_api_token, &user_agent)?;
+    let mut search_results = github_search.search().unwrap();
 
-    if let Some(errors) = graphql_response.error {
-        println!("{errors}")
-    }
-
-    let Some(data) = graphql_response.data else {
-        return Ok(());
-    };
-
-    for repository in data.repositories() {
+    for repository in &mut search_results {
         println!(
             "GraphQL ID: {}\nName: {}\nLatest Commit: {}\nPushed At: {}\n% Written in Rust {:.2}%\n",
             repository.id(),
@@ -30,5 +25,6 @@ fn main() -> anyhow::Result<()> {
             repository.percent_of_code_in_rust(),
         );
     }
+    println!("Next Token: {:?}", search_results.next_page());
     Ok(())
 }
