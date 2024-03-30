@@ -1,8 +1,15 @@
 use anyhow::Context;
 use rustfmt_user_config_db::GitHubRepoSearch;
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
 
 fn main() -> anyhow::Result<()> {
     dotenv::dotenv().ok();
+
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::EnvFilter::from_env("RUSTFMT_LOG"))
+        .with(tracing_subscriber::fmt::layer())
+        .init();
 
     let github_api_token = std::env::var("GITHUB_API_TOKEN")
         .context("Must set GITHUB_API_TOKEN environment variable")?;

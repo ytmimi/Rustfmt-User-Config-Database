@@ -154,14 +154,14 @@ impl RepoSearchResults {
             .send()
             .and_then(|resp| resp.text())
             .map_err(|err| {
-                // TODO(ytmimi) log out the error
+                tracing::error!(?err);
                 return err;
             })
             .ok()?;
 
         let search_results = GraphQLResponse::<GitHubSearchResult>::new(text)
             .map_err(|err| {
-                // TODO(ytmimi) log out the error
+                tracing::error!(?err);
                 err
             })
             .ok()
@@ -169,13 +169,13 @@ impl RepoSearchResults {
                 if graphql_response.data.is_some() {
                     graphql_response.data
                 } else {
-                    // TODO(ytmimi) log out the error
+                    tracing::error!(err=?graphql_response.error);
                     None
                 }
             })?;
 
-        // TODO(ytmimi) log out the total number of repos that matched the query
-        // using search_results.total_repository_count()
+        let total_repository_count = search_results.total_repository_count();
+        tracing::debug!(total_repository_count);
 
         if let Some(next_page) = search_results.next_page() {
             self.next_page = Some(next_page.to_string());
