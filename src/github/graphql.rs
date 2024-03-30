@@ -59,9 +59,14 @@ query GitHubRepositorySearch(
 pub(crate) fn github_repository_search_variables(
     limit: usize,
     cursor_offset: Option<&str>,
+    min_stars: Option<usize>,
 ) -> serde_json::Value {
+    let search_str = format!(
+        "language:rust topic:rust stars:>={} template:false archived:false",
+        min_stars.unwrap_or(50)
+    );
     serde_json::json!({
-      "gitHubSearchString": "language:rust topic:rust stars:>=50 template:false archived:false",
+      "gitHubSearchString": search_str,
       "limit": limit,
       "cursorOffset": cursor_offset,
       "languageOrderBy": {"field": "SIZE", "direction": "DESC"}
