@@ -189,13 +189,14 @@ pub struct RepositoryInfo {
 }
 
 fn deserialize_git_url<'de, D>(data: D) -> Result<String, D::Error>
-where D: Deserializer<'de>
+where
+    D: Deserializer<'de>,
 {
     let mut url = String::deserialize(data)?;
     if !url.ends_with(".git") {
         url.push_str(".git");
     }
-    return Ok(url)
+    Ok(url)
 }
 
 impl RepositoryInfo {
@@ -235,8 +236,7 @@ impl RepositoryInfo {
     /// How much of this repository was written in Rust.
     pub fn percent_of_code_in_rust(&self) -> f64 {
         self.languages()
-            .filter(|programming_language| programming_language.name() == "Rust")
-            .next()
+            .find(|programming_language| programming_language.name() == "Rust")
             .map_or(0.0, |programming_language| {
                 programming_language.percent_of_code_in_repo()
             })

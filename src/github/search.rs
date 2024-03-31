@@ -154,7 +154,7 @@ impl RepoSearchResults {
             .and_then(|resp| resp.text())
             .map_err(|err| {
                 tracing::error!(?err);
-                return err;
+                err
             })
             .ok()?;
 
