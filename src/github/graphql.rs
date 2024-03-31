@@ -161,19 +161,10 @@ pub(super) struct RepositoryInfo {
     description: String,
     /// Identifies the date and time when the repository was archived.
     #[serde(with = "time::serde::iso8601::option")]
-    // FIXME(ytmimi) I eventualy plan to write this value to the database,
-    // but I don't need it now.
-    #[allow(unused)]
     archived_at: Option<OffsetDateTime>,
     /// Identifies if the repository is a fork.
-    // FIXME(ytmimi) I eventualy plan to write this value to the database,
-    // but I don't need it now.
-    #[allow(unused)]
     is_fork: bool,
     /// Indicates if the repository has been locked or not.
-    // FIXME(ytmimi) I eventualy plan to write this value to the database,
-    // but I don't need it now.
-    #[allow(unused)]
     is_locked: bool,
     /// Identifies the date and time when the repository was last pushed to.
     #[serde(with = "time::serde::iso8601")]
@@ -246,6 +237,20 @@ impl RepositoryInfo {
         &self.default_branch_ref.target.oid
     }
 
+    /// Identifies if the repository is a fork.
+    pub(super) fn is_fork(&self) -> bool {
+        self.is_fork
+    }
+
+    /// Indicates if the repository has been locked or not.
+    pub(super) fn is_locked(&self) -> bool {
+        self.is_locked
+    }
+
+    /// The date this repository was archived
+    pub(super) fn archived_at(&self) -> Option<OffsetDateTime> {
+        self.archived_at
+    }
     /// The last time this repository was pushed.
     pub(super) fn pushed_at(&self) -> OffsetDateTime {
         self.pushed_at

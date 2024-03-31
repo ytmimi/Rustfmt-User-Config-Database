@@ -58,6 +58,24 @@ impl Repository {
         }
     }
 
+    pub fn is_fork(&self) -> bool {
+        match &self.inner {
+            RepositoryInner::GitHub(repo) => repo.is_fork(),
+        }
+    }
+
+    pub fn is_locked(&self) -> bool {
+        match &self.inner {
+            RepositoryInner::GitHub(repo) => repo.is_locked(),
+        }
+    }
+
+    pub fn archived_at(&self) -> Option<time::OffsetDateTime> {
+        match &self.inner {
+            RepositoryInner::GitHub(repo) => repo.archived_at(),
+        }
+    }
+
     pub fn pushed_at(&self) -> time::OffsetDateTime {
         match &self.inner {
             RepositoryInner::GitHub(repo) => repo.pushed_at(),
