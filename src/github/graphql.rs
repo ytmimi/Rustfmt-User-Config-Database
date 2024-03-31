@@ -1,3 +1,4 @@
+use super::Repository;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Deserializer};
 use time::OffsetDateTime;
@@ -125,15 +126,13 @@ impl GitHubSearchResult {
         self.search.repository_count
     }
 
-    /// All the repositories returned in this page of data.
-    #[allow(dead_code)]
-    pub(super) fn repositories(&self) -> &[RepositoryInfo] {
-        &self.search.repositories
-    }
-
     /// Convert the search result into a [Vec<RepositoryInfo>].
-    pub(super) fn into_repositories(self) -> Vec<RepositoryInfo> {
-        self.search.repositories
+    pub(super) fn into_repositories(self) -> Vec<Repository> {
+        self.search
+            .repositories
+            .into_iter()
+            .map(|repo_info| repo_info.into())
+            .collect::<_>()
     }
 
     /// Token for the next page of data if it exists.
@@ -145,7 +144,7 @@ impl GitHubSearchResult {
 /// Metadata about this GitHub Repository
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct RepositoryInfo {
+pub(super) struct RepositoryInfo {
     /// The Node ID of the Repository object.
     /// The [`ID`] represents a unique identifier that is Base64 obfuscated
     ///
@@ -204,29 +203,29 @@ impl RepositoryInfo {
     /// The [ID] represents a unique identifier that is Base64 obfuscated
     ///
     /// [ID]: https://docs.github.com/en/graphql/reference/scalars#id
-    pub fn id(&self) -> &str {
+    pub(super) fn id(&self) -> &str {
         self.id.as_str()
     }
 
     /// Get the name of the repostor with the owner included.
     /// For example `rust-lang/rust`
-    pub fn name_with_owner(&self) -> &str {
+    pub(super) fn name_with_owner(&self) -> &str {
         self.name_with_owner.as_str()
     }
 
     /// Remote repository URL.
-    pub fn url(&self) -> &str {
+    pub(super) fn url(&self) -> &str {
         // Trim `.git` from the end of the url
         &self.git_url[..self.git_url.len() - 4]
     }
 
     /// Git URL used to clone the repository
-    pub fn git_url(&self) -> &str {
+    pub(super) fn git_url(&self) -> &str {
         &self.git_url
     }
 
     /// Provides an iterator over the languages in this git repository.
-    pub fn languages(&self) -> impl Iterator<Item = ProgrammingLanguage<'_>> {
+    fn languages(&self) -> impl Iterator<Item = ProgrammingLanguage<'_>> {
         LanguageIterator {
             total_size: self.languages.total_size,
             inner: self.languages.edges.iter(),
@@ -234,7 +233,7 @@ impl RepositoryInfo {
     }
 
     /// How much of this repository was written in Rust.
-    pub fn percent_of_code_in_rust(&self) -> f64 {
+    pub(super) fn percent_of_code_in_rust(&self) -> f64 {
         self.languages()
             .find(|programming_language| programming_language.name() == "Rust")
             .map_or(0.0, |programming_language| {
@@ -243,17 +242,17 @@ impl RepositoryInfo {
     }
 
     /// Returns a reference to the latest commit hash fetched from GitHub.
-    pub fn commit_hash(&self) -> &str {
+    pub(super) fn commit_hash(&self) -> &str {
         &self.default_branch_ref.target.oid
     }
 
     /// The last time this repository was pushed.
-    pub fn pushed_at(&self) -> OffsetDateTime {
+    pub(super) fn pushed_at(&self) -> OffsetDateTime {
         self.pushed_at
     }
 
     /// The last time this repository was updated.
-    pub fn updated_at(&self) -> OffsetDateTime {
+    pub(super) fn updated_at(&self) -> OffsetDateTime {
         self.updated_at
     }
 }
