@@ -1,7 +1,8 @@
 use super::graphql::{
-    github_repository_search_variables, GitHubSearchResult, GraphQLResponse, RepositoryInfo,
-    GITHUB_GRAPHQL_URL, GITHUB_REPOSITORY_QUERY,
+    github_repository_search_variables, GitHubSearchResult, GraphQLResponse, GITHUB_GRAPHQL_URL,
+    GITHUB_REPOSITORY_QUERY,
 };
+use super::Repository;
 use reqwest::header;
 use std::collections::VecDeque;
 
@@ -94,7 +95,7 @@ impl<'a> GitHubRepoSearch<'a> {
 }
 
 impl<'a> IntoIterator for GitHubRepoSearch<'a> {
-    type Item = RepositoryInfo;
+    type Item = Repository;
     type IntoIter = RepoSearchResults;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -112,7 +113,7 @@ pub struct RepoSearchResults {
     limit: usize,
     successful_requests_made: usize,
     max_requests: Option<usize>,
-    buffered_repos: VecDeque<RepositoryInfo>,
+    buffered_repos: VecDeque<Repository>,
 }
 
 impl RepoSearchResults {
@@ -129,7 +130,7 @@ impl RepoSearchResults {
     /// [get_next_page](RepoSearchResults::get_next_page) will stop returning results once the
     /// max_requests pages have been returned. The number of pages one is allowed to request
     /// can be configured using [max_pages](GitHubRepoSearch::max_pages)
-    pub fn get_next_page(&mut self) -> Option<Vec<RepositoryInfo>> {
+    pub fn get_next_page(&mut self) -> Option<Vec<Repository>> {
         if let Some(max_requests) = self.max_requests {
             if max_requests <= self.successful_requests_made {
                 return None;
@@ -186,7 +187,7 @@ impl RepoSearchResults {
 }
 
 impl Iterator for RepoSearchResults {
-    type Item = RepositoryInfo;
+    type Item = Repository;
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(repo_info) = self.buffered_repos.pop_front() {
             return Some(repo_info);

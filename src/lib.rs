@@ -1,3 +1,3 @@
 mod github;
 
-pub use github::{GitHubRepoSearch, ProgrammingLanguage, RepoSearchResults, RepositoryInfo};
+pub use github::{GitHubRepoSearch, ProgrammingLanguage, RepoSearchResults, Repository};
