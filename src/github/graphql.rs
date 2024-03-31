@@ -1,5 +1,5 @@
 use serde::de::DeserializeOwned;
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 use time::OffsetDateTime;
 
 /// Details on the endpoint can be found here
@@ -153,6 +153,8 @@ pub struct RepositoryInfo {
     id: String,
     /// The repository's name with owner.
     name_with_owner: String,
+    #[serde(deserialize_with = "deserialize_git_url", rename = "url")]
+    git_url: String,
     /// The description of the repository.
     // FIXME(ytmimi) I eventualy plan to write this value to the database,
     // but I don't need it now.
@@ -186,6 +188,16 @@ pub struct RepositoryInfo {
     default_branch_ref: GitBranchRef,
 }
 
+fn deserialize_git_url<'de, D>(data: D) -> Result<String, D::Error>
+where D: Deserializer<'de>
+{
+    let mut url = String::deserialize(data)?;
+    if !url.ends_with(".git") {
+        url.push_str(".git");
+    }
+    return Ok(url)
+}
+
 impl RepositoryInfo {
     /// Get the GitHub GraphQL ID for this repository.
     /// The [ID] represents a unique identifier that is Base64 obfuscated
@@ -199,6 +211,17 @@ impl RepositoryInfo {
     /// For example `rust-lang/rust`
     pub fn name_with_owner(&self) -> &str {
         self.name_with_owner.as_str()
+    }
+
+    /// Remote repository URL.
+    pub fn url(&self) -> &str {
+        // Trim `.git` from the end of the url
+        &self.git_url[..self.git_url.len() - 4]
+    }
+
+    /// Git URL used to clone the repository
+    pub fn git_url(&self) -> &str {
+        &self.git_url
     }
 
     /// Provides an iterator over the languages in this git repository.
