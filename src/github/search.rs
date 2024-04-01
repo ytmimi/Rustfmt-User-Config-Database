@@ -146,6 +146,7 @@ impl RepoSearchResults {
         });
 
         let request_body = body.to_string();
+        tracing::trace!(request_body=?request_body);
 
         let text = self
             .client
@@ -154,14 +155,15 @@ impl RepoSearchResults {
             .send()
             .and_then(|resp| resp.text())
             .map_err(|err| {
-                tracing::error!(?err);
+                tracing::error!(request_error=?err);
                 err
             })
             .ok()?;
 
+        tracing::trace!(response_body=text);
         let search_results = GraphQLResponse::<GitHubSearchResult>::new(text)
             .map_err(|err| {
-                tracing::error!(?err);
+                tracing::error!(serialization_error=?err);
                 err
             })
             .ok()
@@ -169,7 +171,7 @@ impl RepoSearchResults {
                 if graphql_response.data.is_some() {
                     graphql_response.data
                 } else {
-                    tracing::error!(err=?graphql_response.error);
+                    tracing::error!(graphql_response_err=?graphql_response.error);
                     None
                 }
             })?;
