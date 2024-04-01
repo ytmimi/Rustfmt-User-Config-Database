@@ -23,6 +23,8 @@ fn main() -> anyhow::Result<()> {
             limit,
             max_pages,
             stars,
+            dry_run,
+            repo,
             ..
         } => {
             let github_api_token = std::env::var("GITHUB_API_TOKEN")
@@ -34,6 +36,10 @@ fn main() -> anyhow::Result<()> {
                 .max_pages(max_pages as usize)
                 .min_stars(stars as usize);
 
+            if let Some(name) = repo {
+                github_search.repository_name(&name);
+            }
+
             let mut search_results = github_search.search().unwrap();
 
             // FIXME(ytmim) Need to create the async runtime manually because it doesn't play well with the
@@ -42,7 +48,14 @@ fn main() -> anyhow::Result<()> {
             let runtime = tokio::runtime::Builder::new_multi_thread()
                 .enable_all()
                 .build()?;
+
             while let Some(repositories) = search_results.get_next_page() {
+                if dry_run {
+                    for repo in repositories {
+                        println!("{repo:#}")
+                    }
+                    continue;
+                }
                 runtime.block_on(run_store_in_db(&databse_url, repositories))?;
             }
             println!("Next Token: {:?}", search_results.next_page());

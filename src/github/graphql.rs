@@ -1,3 +1,4 @@
+use super::search::Repo;
 use super::Repository;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Deserializer};
@@ -61,13 +62,24 @@ pub(super) fn github_repository_search_variables(
     limit: usize,
     cursor_offset: Option<&str>,
     min_stars: Option<usize>,
+    repo_name: Option<&Repo>,
 ) -> serde_json::Value {
-    let search_str = format!(
-        "language:rust topic:rust stars:>={} template:false archived:false",
-        min_stars.unwrap_or(50)
-    );
+    let mut search_string = match repo_name {
+        Some(Repo::Name(name)) => {
+            format!("{name} in:name ")
+        }
+        Some(Repo::NameWithOwner(name)) => {
+            format!("repo:{name} ")
+        }
+        None => {
+            format!("topic:rust stars:>={} ", min_stars.unwrap_or(50))
+        }
+    };
+
+    search_string.push_str("language:rust template:false archived:false");
+
     serde_json::json!({
-      "gitHubSearchString": search_str,
+      "gitHubSearchString": search_string,
       "limit": limit,
       "cursorOffset": cursor_offset,
       "languageOrderBy": {"field": "SIZE", "direction": "DESC"}

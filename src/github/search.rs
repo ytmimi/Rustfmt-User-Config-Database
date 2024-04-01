@@ -5,6 +5,9 @@ use super::graphql::{
 use super::Repository;
 use reqwest::header;
 use std::collections::VecDeque;
+use std::convert::Infallible;
+use std::ops::Deref;
+use std::str::FromStr;
 
 /// Configure searches for GitHub repositories.
 pub struct GitHubRepoSearch<'a> {
@@ -21,6 +24,8 @@ pub struct GitHubRepoSearch<'a> {
     /// Max number of times to query GitHub for a new page of data.
     /// Defaults to 1.
     max_requests: Option<usize>,
+    /// Name of the repository to search for
+    repo_name: Option<Repo>,
 }
 
 impl<'a> GitHubRepoSearch<'a> {
@@ -31,6 +36,7 @@ impl<'a> GitHubRepoSearch<'a> {
             min_stars: 50,
             limit: 100,
             max_requests: Some(1),
+            repo_name: None,
         }
     }
 
@@ -50,6 +56,12 @@ impl<'a> GitHubRepoSearch<'a> {
     /// Set the max number of pages to fetch from GitHub when iterating over [RepoSearchResults].
     pub fn max_pages(&mut self, max_requests: usize) -> &mut Self {
         self.max_requests = Some(max_requests);
+        self
+    }
+
+    /// Set the repository name to search for
+    pub fn repository_name(&mut self, name: &str) -> &mut Self {
+        self.repo_name = Some(Repo::from_str(name).expect("infallible conversion"));
         self
     }
 
@@ -89,8 +101,37 @@ impl<'a> GitHubRepoSearch<'a> {
             limit: self.limit,
             successful_requests_made: 0,
             max_requests: self.max_requests,
+            repo_name: self.repo_name,
             buffered_repos: VecDeque::with_capacity(self.limit),
         })
+    }
+}
+
+pub(super) enum Repo {
+    Name(String),
+    NameWithOwner(String),
+}
+
+impl FromStr for Repo {
+    type Err = Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.contains("/") {
+            Ok(Repo::NameWithOwner(s.to_string()))
+        } else {
+            Ok(Repo::Name(s.to_string()))
+        }
+    }
+}
+
+impl Deref for Repo {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Repo::Name(s) => s.deref(),
+            Repo::NameWithOwner(s) => s.deref(),
+        }
     }
 }
 
@@ -113,6 +154,7 @@ pub struct RepoSearchResults {
     limit: usize,
     successful_requests_made: usize,
     max_requests: Option<usize>,
+    repo_name: Option<Repo>,
     buffered_repos: VecDeque<Repository>,
 }
 
@@ -137,8 +179,13 @@ impl RepoSearchResults {
             }
         }
 
-        let variables =
-            github_repository_search_variables(self.limit, self.next_page(), Some(self.min_stars));
+        let variables = github_repository_search_variables(
+            self.limit,
+            self.next_page(),
+            Some(self.min_stars),
+            self.repo_name.as_ref(),
+        );
+
         let body = serde_json::json!({
             "operationName": "GitHubRepositorySearch",
             "query": GITHUB_REPOSITORY_QUERY,
@@ -160,7 +207,7 @@ impl RepoSearchResults {
             })
             .ok()?;
 
-        tracing::trace!(response_body=text);
+        tracing::trace!(response_body = text);
         let search_results = GraphQLResponse::<GitHubSearchResult>::new(text)
             .map_err(|err| {
                 tracing::error!(serialization_error=?err);
