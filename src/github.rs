@@ -1,6 +1,7 @@
 mod graphql;
 mod search;
 use graphql::RepositoryInfo as GraphQLRepoInfo;
+use std::fmt::{Debug, Display};
 
 pub use graphql::ProgrammingLanguage;
 pub use search::{GitHubRepoSearch, RepoSearchResults};
@@ -86,5 +87,34 @@ impl Repository {
         match &self.inner {
             RepositoryInner::GitHub(repo) => repo.updated_at(),
         }
+    }
+}
+
+impl Display for Repository {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Repository")
+            .field("name", &self.name_with_owner())
+            .field("commit", &self.commit_hash())
+            .field("url", &self.url())
+            .field("percent_of_code_in_rust", &format_args!("{:.2}", self.percent_of_code_in_rust()))
+            .finish()
+    }
+}
+
+impl Debug for Repository {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Repository")
+            .field("id", &self.id())
+            .field("name_with_owner", &self.name_with_owner())
+            .field("commit_hash", &self.commit_hash())
+            .field("url", &self.url())
+            .field("git_url", &self.git_url())
+            .field("percent_of_code_in_rust", &format_args!("{:.2}", self.percent_of_code_in_rust()))
+            .field("is_fork", &self.is_fork())
+            .field("is_locked", &self.is_locked())
+            .field("archived_at", &self.archived_at())
+            .field("pushed_at", &self.pushed_at())
+            .field("updated_at", &self.updated_at())
+            .finish()
     }
 }
