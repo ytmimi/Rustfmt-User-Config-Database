@@ -1,3 +1,4 @@
+pub mod cli;
 mod database;
 mod github;
 
