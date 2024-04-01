@@ -158,7 +158,7 @@ pub(super) struct RepositoryInfo {
     // FIXME(ytmimi) I eventualy plan to write this value to the database,
     // but I don't need it now.
     #[allow(unused)]
-    description: String,
+    description: Option<String>,
     /// Identifies the date and time when the repository was archived.
     #[serde(with = "time::serde::iso8601::option")]
     archived_at: Option<OffsetDateTime>,
