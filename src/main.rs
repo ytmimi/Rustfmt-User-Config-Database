@@ -1,7 +1,7 @@
 use anyhow::Context;
 use clap::Parser;
 use rustfmt_user_config_db::cli::{Cli, Commands};
-use rustfmt_user_config_db::{store_in_db, GitHubRepoSearch, Repository};
+use rustfmt_user_config_db::{lookup_repositories, store_in_db, GitHubRepoSearch, Repository};
 use sqlx::postgres::PgPoolOptions;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -60,6 +60,13 @@ fn main() -> anyhow::Result<()> {
             }
             println!("Next Token: {:?}", search_results.next_page());
         }
+        Commands::ExtractRustfmtToml { limit, dry_run } => {
+            let runtime = tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .build()?;
+
+            runtime.block_on(extract_rustfmt_confs(&databse_url, limit as i32, dry_run))?;
+        }
     }
 
     Ok(())
@@ -76,4 +83,28 @@ async fn run_store_in_db(
         .context("can't connect to database")?;
 
     store_in_db(db, repositories.into_iter()).await
+}
+
+async fn extract_rustfmt_confs(
+    connection_str: &str,
+    limit: i32,
+    dry_run: bool,
+) -> anyhow::Result<()> {
+    let db = PgPoolOptions::new()
+        .max_connections(20)
+        .connect(connection_str)
+        .await
+        .context("can't connect to database")?;
+
+    let repositories = lookup_repositories(db, limit).await?;
+
+    for repo in repositories {
+        if dry_run {
+            println!("{repo:#}");
+            continue;
+        }
+
+        // TODO(ytmimi) Clone repo etc and store in database
+    }
+    Ok(())
 }

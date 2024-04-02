@@ -30,4 +30,15 @@ pub enum Commands {
         #[arg(short, long, default_value_t = false)]
         dry_run: bool,
     },
+    /// Clone repositories stored in the database and extract rustfmt.toml files
+    #[command(name = "extract-rustfmt-config")]
+    ExtractRustfmtToml {
+        /// Limit of how many repositories to fetch on each page
+        #[arg(short, long, default_value_t = 100)]
+        limit: u16,
+        /// Prints out repository details as well as any rustfmt configuration files found in the
+        /// repository
+        #[arg(short, long, default_value_t = false)]
+        dry_run: bool,
+    },
 }
