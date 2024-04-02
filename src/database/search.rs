@@ -15,11 +15,14 @@ pub async fn lookup_repositories(db: PgPool, limit: i32) -> anyhow::Result<Vec<R
     pushed_at,
     updated_at
 from github_repositories
-where can_clone_repo
-    and not is_fork
-    and not is_locked
-    and archived_at is null
-order by record_last_updated
+where last_git_cloned_at is null
+    or (
+        can_clone_repo
+        and not is_fork
+        and not is_locked
+        and archived_at is null
+    )
+order by last_git_cloned_at nulls first
 limit $1;
 ";
     let result: Vec<GitRepository> = sqlx::query_as(query).bind(limit).fetch_all(&db).await?;
