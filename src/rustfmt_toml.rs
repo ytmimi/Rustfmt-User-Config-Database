@@ -14,7 +14,7 @@ impl std::fmt::Debug for RustfmtConfig {
     }
 }
 
-impl<'u, 'd> crate::git::ClonedRepo<'u, 'd> {
+impl<'u> crate::git::ClonedRepo<'u> {
     pub fn find_rustfmt_configs(&self) -> impl Iterator<Item = RustfmtConfig> + '_ {
         let directory_path = self.path();
         let config_files = search_for_rustfmt_config_files(directory_path);

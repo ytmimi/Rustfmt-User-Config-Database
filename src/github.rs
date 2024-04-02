@@ -112,7 +112,7 @@ impl Repository {
         }
     }
 
-    pub fn git_clone<'u, 'd>(&'u self, directory: &'d Path) -> anyhow::Result<ClonedRepo<'u, 'd>> {
+    pub fn git_clone<'u, 'd>(&'u self, directory: &'d Path) -> anyhow::Result<ClonedRepo<'u>> {
         tracing::info!(
             "cloning {:?} into {}",
             self.name_with_owner(),

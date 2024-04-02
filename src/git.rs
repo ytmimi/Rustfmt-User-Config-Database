@@ -1,13 +1,13 @@
 use anyhow::Context;
 use git2::build::RepoBuilder;
 use git2::{FetchOptions, Repository as GitRepository};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 pub fn clone_repo<'u, 'd>(
     url: &'u str,
     directory: &'d Path,
     depth: i32,
-) -> anyhow::Result<ClonedRepo<'u, 'd>> {
+) -> anyhow::Result<ClonedRepo<'u>> {
     if !directory.is_dir() {
         return Err(anyhow::anyhow!(
             "{} is not a direcotry",
@@ -31,20 +31,20 @@ pub fn clone_repo<'u, 'd>(
             e
         })
         .map(|repo| ClonedRepo {
-            _repo: repo,
+            repo,
             url,
-            directory,
+            directory: directory.to_owned(),
         })
         .with_context(|| format!("failed to clone repo: {url} to {}", directory.display()))
 }
 
-pub struct ClonedRepo<'url, 'directory> {
-    _repo: GitRepository,
+pub struct ClonedRepo<'url> {
+    repo: GitRepository,
     url: &'url str,
-    directory: &'directory Path,
+    directory: PathBuf,
 }
 
-impl<'url, 'directory> std::fmt::Debug for ClonedRepo<'url, 'directory> {
+impl<'url> std::fmt::Debug for ClonedRepo<'url> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ClonedRepo")
             .field("url", &self.url)
@@ -53,8 +53,8 @@ impl<'url, 'directory> std::fmt::Debug for ClonedRepo<'url, 'directory> {
     }
 }
 
-impl<'url, 'directory> ClonedRepo<'url, 'directory> {
+impl<'url> ClonedRepo<'url> {
     pub(crate) fn path(&self) -> &Path {
-        self.directory
+        &self.directory
     }
 }
