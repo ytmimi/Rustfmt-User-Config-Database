@@ -1,7 +1,9 @@
 use anyhow::Context;
 use clap::Parser;
 use rustfmt_user_config_db::cli::{Cli, Commands};
-use rustfmt_user_config_db::{lookup_repositories, store_in_db, GitHubRepoSearch, Repository};
+use rustfmt_user_config_db::{
+    lookup_repositories, store_in_db, store_rustfmt_configs, GitHubRepoSearch, Repository,
+};
 use sqlx::postgres::PgPoolOptions;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -99,24 +101,32 @@ async fn extract_rustfmt_confs(
     let repositories = lookup_repositories(&db, limit).await?;
 
     let temp_dir = tempfile::tempdir()?;
-    for repo in repositories {
-        let clone_path = temp_dir.path().join(repo.name_with_owner());
-        if let Err(e) = std::fs::create_dir_all(&clone_path) {
-            tracing::error!("{e:?} could not create {}", clone_path.display());
-            continue;
-        }
+    if dry_run {
+        for repo in repositories {
+            let clone_path = temp_dir.path().join(repo.name_with_owner());
+            if let Err(e) = std::fs::create_dir_all(&clone_path) {
+                tracing::error!("{e:?} could not create {}", clone_path.display());
+                continue;
+            }
 
-        let cloned = repo.git_clone(&clone_path)?;
+            let cloned = repo.git_clone(&clone_path)?;
 
-        if dry_run {
-            println!("\n{repo:#}");
             for rustfmt_config in cloned.find_rustfmt_configs() {
                 println!("{rustfmt_config:?}")
             }
-            continue;
         }
-
-        // TODO(ytmimi) Store toml files in database
+        return Ok(());
     }
-    Ok(())
+
+    let repos = repositories.iter().filter_map(|r| {
+        let clone_path = temp_dir.path().join(r.name_with_owner());
+        if let Err(e) = std::fs::create_dir_all(&clone_path) {
+            tracing::error!("{e:?} could not create {}", clone_path.display());
+            return None;
+        }
+        let cloned = r.git_clone(&clone_path).ok()?;
+        Some((r, cloned))
+    });
+
+    store_rustfmt_configs(&db, repos).await
 }
