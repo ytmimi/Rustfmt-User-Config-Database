@@ -2,7 +2,7 @@ use crate::database::repository::GitRepository;
 use crate::Repository;
 use sqlx::PgPool;
 
-pub async fn lookup_repositories(db: PgPool, limit: i32) -> anyhow::Result<Vec<Repository>> {
+pub async fn lookup_repositories(db: &PgPool, limit: i32) -> anyhow::Result<Vec<Repository>> {
     let query = "select
     github_graphql_id as id,
     repo_name as name_with_owner,
@@ -25,6 +25,6 @@ where last_git_cloned_at is null
 order by last_git_cloned_at nulls first
 limit $1;
 ";
-    let result: Vec<GitRepository> = sqlx::query_as(query).bind(limit).fetch_all(&db).await?;
+    let result: Vec<GitRepository> = sqlx::query_as(query).bind(limit).fetch_all(db).await?;
     Ok(result.into_iter().map(Into::into).collect())
 }

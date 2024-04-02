@@ -96,7 +96,7 @@ async fn extract_rustfmt_confs(
         .await
         .context("can't connect to database")?;
 
-    let repositories = lookup_repositories(db, limit).await?;
+    let repositories = lookup_repositories(&db, limit).await?;
 
     let temp_dir = tempfile::tempdir()?;
     for repo in repositories {
