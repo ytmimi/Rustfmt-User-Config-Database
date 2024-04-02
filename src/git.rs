@@ -57,4 +57,16 @@ impl<'url> ClonedRepo<'url> {
     pub(crate) fn path(&self) -> &Path {
         &self.directory
     }
+
+    pub fn head(&self) -> Option<String> {
+        self.repo
+            .head()
+            .map_err(|e| {
+                tracing::error!("could not get repository head: {e:?}");
+                e
+            })
+            .ok()?
+            .target()
+            .map(|oid| oid.to_string())
+    }
 }
