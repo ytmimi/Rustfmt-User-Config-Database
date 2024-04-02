@@ -1,8 +1,20 @@
+use anyhow::Context;
 use std::path::{Path, PathBuf};
 
 pub struct RustfmtConfig {
     file_path: String,
     toml: toml::Value,
+}
+
+impl RustfmtConfig {
+    pub fn relative_path(&self) -> &str {
+        &self.file_path
+    }
+    pub fn to_json(&self) -> anyhow::Result<serde_json::Value> {
+        serde_json::to_string(&self.toml)
+            .and_then(|s| s.parse())
+            .with_context(|| format!("failed to convert {} to json", self.file_path))
+    }
 }
 
 impl std::fmt::Debug for RustfmtConfig {
