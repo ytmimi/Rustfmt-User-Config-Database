@@ -54,5 +54,7 @@ impl<'url, 'directory> std::fmt::Debug for ClonedRepo<'url, 'directory> {
 }
 
 impl<'url, 'directory> ClonedRepo<'url, 'directory> {
-
+    pub(crate) fn path(&self) -> &Path {
+        self.directory
+    }
 }

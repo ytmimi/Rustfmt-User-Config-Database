@@ -113,7 +113,11 @@ impl Repository {
     }
 
     pub fn git_clone<'u, 'd>(&'u self, directory: &'d Path) -> anyhow::Result<ClonedRepo<'u, 'd>> {
-        tracing::info!("cloning {:?} into {}", self.name_with_owner(), directory.display());
+        tracing::info!(
+            "cloning {:?} into {}",
+            self.name_with_owner(),
+            directory.display()
+        );
         // FIXME(ytmimi) This known to be slower than just calling `git clone` on the command line
         // See: https://github.com/rust-lang/git2-rs/issues/729
         clone_repo(self.git_url(), directory, 1)
