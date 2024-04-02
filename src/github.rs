@@ -117,7 +117,10 @@ impl Display for Repository {
             .field("name", &self.name_with_owner())
             .field("commit", &self.commit_hash())
             .field("url", &self.url())
-            .field("percent_of_code_in_rust", &format_args!("{:.2}", self.percent_of_code_in_rust()))
+            .field(
+                "percent_of_code_in_rust",
+                &format_args!("{:.2}", self.percent_of_code_in_rust()),
+            )
             .finish()
     }
 }
@@ -130,7 +133,10 @@ impl Debug for Repository {
             .field("commit_hash", &self.commit_hash())
             .field("url", &self.url())
             .field("git_url", &self.git_url())
-            .field("percent_of_code_in_rust", &format_args!("{:.2}", self.percent_of_code_in_rust()))
+            .field(
+                "percent_of_code_in_rust",
+                &format_args!("{:.2}", self.percent_of_code_in_rust()),
+            )
             .field("is_fork", &self.is_fork())
             .field("is_locked", &self.is_locked())
             .field("archived_at", &self.archived_at())
