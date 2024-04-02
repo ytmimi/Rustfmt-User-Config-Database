@@ -1,5 +1,6 @@
 pub mod cli;
 mod database;
+mod git;
 mod github;
 
 pub use database::search::lookup_repositories;

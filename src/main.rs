@@ -98,12 +98,20 @@ async fn extract_rustfmt_confs(
 
     let repositories = lookup_repositories(db, limit).await?;
 
+    let temp_dir = tempfile::tempdir()?;
     for repo in repositories {
         if dry_run {
             println!("{repo:#}");
             continue;
         }
 
+        let clone_path = temp_dir.path().join(repo.name_with_owner());
+        if let Err(e) = std::fs::create_dir_all(&clone_path) {
+            tracing::error!("{e:?} could not create {}", clone_path.display());
+            continue;
+        }
+
+        let cloned = repo.git_clone(&clone_path)?;
         // TODO(ytmimi) Clone repo etc and store in database
     }
     Ok(())

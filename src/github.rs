@@ -2,8 +2,10 @@ mod graphql;
 mod search;
 use graphql::RepositoryInfo as GraphQLRepoInfo;
 use std::fmt::{Debug, Display};
+use std::path::Path;
 
 use crate::database::repository::GitRepository;
+use crate::git::{clone_repo, ClonedRepo};
 pub use graphql::ProgrammingLanguage;
 pub use search::{GitHubRepoSearch, RepoSearchResults};
 
@@ -108,6 +110,13 @@ impl Repository {
             RepositoryInner::GitHub(repo) => repo.updated_at(),
             RepositoryInner::Databae(repo) => repo.updated_at(),
         }
+    }
+
+    pub fn git_clone<'u, 'd>(&'u self, directory: &'d Path) -> anyhow::Result<ClonedRepo<'u, 'd>> {
+        tracing::info!("cloning {:?} into {}", self.name_with_owner(), directory.display());
+        // FIXME(ytmimi) This known to be slower than just calling `git clone` on the command line
+        // See: https://github.com/rust-lang/git2-rs/issues/729
+        clone_repo(self.git_url(), directory, 1)
     }
 }
 
